@@ -1,0 +1,17 @@
+# Build output - never commit these, and never submit them either.
+*.exe
+*.o
+*.obj
+kiosk
+task4
+
+# Editor / OS noise
+.vscode/settings.json
+.DS_Store
+Thumbs.db
+*~
+
+# The assignment brief itself and personal study notes are not part of
+# the code submission.
+*.pdf
+Task4_Notes.md
