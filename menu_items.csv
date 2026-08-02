@@ -1,29 +1,29 @@
 ItemID,Name,Stall,Category,Price,Available
-M001,Nasi Lemak Ayam,Selera Malaya,Malay,8.50,1
-M002,Mee Goreng Mamak,Selera Malaya,Malay,7.00,1
-M003,Nasi Goreng Kampung,Selera Malaya,Malay,7.50,1
-M004,Ayam Penyet,Selera Malaya,Malay,10.90,1
-M005,Roti Canai Telur,Selera Malaya,Malay,3.50,1
-C001,Chicken Rice,Wok Master,Chinese,9.00,1
-C002,Char Kuey Teow,Wok Master,Chinese,8.90,1
-C003,Wantan Mee,Wok Master,Chinese,8.00,1
-C004,Sweet And Sour Pork,Wok Master,Chinese,11.50,0
-C005,Claypot Yee Mee,Wok Master,Chinese,10.00,1
-W001,Beef Burger,Western Corner,Western,12.90,1
-W002,Chicken Chop,Western Corner,Western,14.50,1
-W003,Fish And Chips,Western Corner,Western,13.90,1
-W004,Spaghetti Bolognese,Western Corner,Western,11.90,0
-W005,Grilled Chicken Salad,Western Corner,Western,10.50,1
-I001,Chicken Briyani,Spice Route,Indian,11.00,1
-I002,Thosai Masala,Spice Route,Indian,5.50,1
-I003,Chapati Set,Spice Route,Indian,6.00,1
-I004,Teh Tarik,Spice Route,Indian,2.80,1
 B001,Iced Milo,Drinks Bar,Beverage,3.50,1
 B002,Teh Tarik,Drinks Bar,Beverage,2.50,1
 B003,Fresh Orange Juice,Drinks Bar,Beverage,5.00,1
 B004,Iced Lemon Tea,Drinks Bar,Beverage,4.00,1
 B005,Kopi O,Drinks Bar,Beverage,2.20,1
+C001,Chicken Rice,Wok Master,Chinese,9.00,1
+C002,Char Kuey Teow,Wok Master,Chinese,8.90,1
+C003,Wantan Mee,Wok Master,Chinese,8.00,1
+C004,Sweet And Sour Pork,Wok Master,Chinese,11.50,0
+C005,Claypot Yee Mee,Wok Master,Chinese,10.00,1
 D001,Cendol Special,Sweet Treats,Dessert,6.50,1
 D002,Chocolate Brownie,Sweet Treats,Dessert,7.90,1
 D003,Ais Kacang,Sweet Treats,Dessert,6.00,0
 D004,Cheesecake Slice,Sweet Treats,Dessert,9.50,1
+I001,Chicken Briyani,Spice Route,Indian,11.00,1
+I002,Thosai Masala,Spice Route,Indian,5.50,1
+I003,Chapati Set,Spice Route,Indian,6.00,1
+I004,Teh Tarik,Spice Route,Indian,2.80,1
+M001,Nasi Lemak Ayam,Selera Malaya,Malay,8.50,1
+M002,Mee Goreng Mamak,Selera Malaya,Malay,7.00,1
+M003,Nasi Goreng Kampung,Selera Malaya,Malay,7.50,1
+M004,Ayam Penyet,Selera Malaya,Malay,10.90,1
+M005,Roti Canai Telur,Selera Malaya,Malay,3.50,1
+W001,Beef Burger,Western Corner,Western,12.90,1
+W002,Chicken Chop,Western Corner,Western,14.50,1
+W003,Fish And Chips,Western Corner,Western,13.90,1
+W004,Spaghetti Bolognese,Western Corner,Western,11.90,0
+W005,Grilled Chicken Salad,Western Corner,Western,10.50,1
