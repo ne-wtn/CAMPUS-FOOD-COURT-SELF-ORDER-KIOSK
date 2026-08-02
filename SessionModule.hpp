@@ -21,6 +21,9 @@ class SessionModule
 public:
     SessionModule();
 
+    // Fixed upper bound for the history stack.
+    static const int MAX_SESSION_STEPS = 100;
+
     // --- Entry point -------------------------------------------------------
     void run();                                     // the Task 3 sub-menu
 
@@ -35,16 +38,9 @@ public:
     std::string currentStudentID() const;
 
 private:
-    // TODO (Task 3 owner): declare your own stack here, in its own
-    //       SessionStack.hpp / .cpp files.
-    //
-    //   Functional requirements from the brief:
-    //     - record every step of a kiosk session in the order it happened
-    //     - store the whole history from login to the current state
-    //     - step backwards one action at a time
-    //     - allow a previous state to be revisited and changed
-    //     - handle going back on an empty history and exceeding the limit
     std::string placeholderStudentID;
+    std::string stepHistory[MAX_SESSION_STEPS];
+    int         historyCount;
 };
 
 #endif // SESSION_MODULE_HPP
