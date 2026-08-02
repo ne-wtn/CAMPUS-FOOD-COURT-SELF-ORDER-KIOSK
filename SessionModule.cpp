@@ -1,10 +1,8 @@
 // ============================================================================
 //  File        : SessionModule.cpp
 //  Module      : TASK 3 - Kiosk Session History and Navigation Module
-//  Owner       : <member 3 - put your name and TP number here>
+//  Owner       : <Member 3 - Dorjee Dhaktsel Lama / TP086416>
 //
-//  >>> SKELETON <<<  Replace the bodies with your real stack implementation -
-//  do not change the signatures.
 // ============================================================================
 
 #include "SessionModule.hpp"
@@ -96,7 +94,7 @@ void SessionModule::run()
             }
             else
             {
-                ConsoleUI::showMessage("No step is available to undo.");
+                ConsoleUI::showMessage("You're already at the start.");
             }
             ConsoleUI::pause();
         }
@@ -141,7 +139,7 @@ void SessionModule::recordStep(const std::string& description)
 // This is O(1) because it only decrements the stack top and copies one string.
 bool SessionModule::goBack(std::string& restoredStep)
 {
-    if (historyCount <= 0)
+    if (historyCount <= 1)
     {
         restoredStep = "";
         return false;
@@ -150,11 +148,6 @@ bool SessionModule::goBack(std::string& restoredStep)
     historyCount--;
     restoredStep = stepHistory[historyCount];
     stepHistory[historyCount] = "";
-
-    if (historyCount == 0)
-    {
-        placeholderStudentID = "";
-    }
 
     return true;
 }
