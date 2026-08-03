@@ -4,8 +4,7 @@
 //  Owner       : <Member 3 - Dorjee Dhaktsel Lama / TP086416>
 //  Structure   : STACK (LIFO) - fixed-capacity stack for session steps
 //
-//  This class is the pure data-structure layer of Task 3, separated from
-//  SessionModule the same way Task 4 separates MenuBST from MenuModule.
+//  This class is the pure data-structure layer of Task 3 
 // ============================================================================
 
 #ifndef SESSION_STACK_HPP
