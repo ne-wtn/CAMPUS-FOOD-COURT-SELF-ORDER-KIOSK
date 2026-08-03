@@ -2,62 +2,227 @@
 //  File        : SessionModule.cpp
 //  Module      : TASK 3 - Kiosk Session History and Navigation Module
 //  Owner       : <Member 3 - Dorjee Dhaktsel Lama / TP086416>
-//
+//  Description : Implementation of the Task 3 workflow screens, stack-based
+//                history navigation and CSV snapshot persistence.
 // ============================================================================
 
 #include "SessionModule.hpp"
 
 #include <iostream>
+#include <fstream>
 
 namespace
 {
-    const int MENU_VIEW_HISTORY = 1;
-    const int MENU_START_SESSION = 2;
-    const int MENU_RECORD_STEP   = 3;
-    const int MENU_GO_BACK       = 4;
-    const int MENU_END_SESSION   = 5;
-    const int MENU_EXIT          = 0;
+    const int MENU_VIEW_HISTORY      = 1;
+    const int MENU_START_SESSION     = 2;
+    const int MENU_RECORD_STEP       = 3;
+    const int MENU_GO_BACK           = 4;
+    const int MENU_PEEK_CURRENT_STEP = 5;
+    const int MENU_END_SESSION       = 6;
+    const int MENU_SAVE_SNAPSHOT     = 7;
+    const int MENU_LOAD_SNAPSHOT     = 8;
+    const int MENU_EXIT              = 0;
+
+    const char* SNAPSHOT_HEADER = "SessionID,StudentID,StepNumber,Description";
+
+    std::string sanitizeCsvField(const std::string& text)
+    {
+        std::string cleaned = text;
+        for (std::string::size_type i = 0; i < cleaned.length(); i++)
+        {
+            if (cleaned[i] == ',')
+            {
+                cleaned[i] = ';';
+            }
+        }
+        return cleaned;
+    }
 }
 
-// Creates an empty session module with no active student and no history.
-// This is O(1) because it only initializes the fixed state owned by the object.
 SessionModule::SessionModule()
-    : placeholderStudentID(""), historyCount(0)
+    : activeStudentID(""),
+      stepStack(MAX_SESSION_STEPS),
+      activeSessionID(0),
+      totalSessionsStarted(0),
+      totalStepsRecorded(0),
+      totalBackActions(0),
+      defaultSnapshotFile("session_history.csv")
 {
 }
 
-// Shows a small Task 3 menu so the stack can be demonstrated on its own.
-// Each menu action is O(1) except history display, which is O(n) in the number
-// of recorded steps because every entry must be printed.
+bool SessionModule::loadFromCSV(const std::string& fileName)
+{
+    std::ifstream inputFile(fileName.c_str());
+
+    if (!inputFile.is_open())
+    {
+        return false;
+    }
+
+    activeStudentID = "";
+    stepStack.clear();
+
+    int loadedSteps  = 0;
+    int rejectedRows = 0;
+    int expectedStep = 1;
+    int loadedID     = 0;
+    bool hasLoadedID = false;
+
+    std::string line;
+    while (std::getline(inputFile, line))
+    {
+        if (CsvUtil::isHeaderOrBlank(line, "SessionID"))
+        {
+            continue;
+        }
+
+        std::string sessionIDText;
+        std::string studentID;
+        std::string stepNumberText;
+        std::string description;
+
+        int position = CsvUtil::nextField(line, 0, sessionIDText);
+        position = CsvUtil::nextField(line, position, studentID);
+        position = CsvUtil::nextField(line, position, stepNumberText);
+        CsvUtil::nextField(line, position, description);
+
+        bool idIsValid = false;
+        bool stepIsValid = false;
+        int  sessionID = TextUtil::toInteger(sessionIDText, idIsValid);
+        int  stepNumber = TextUtil::toInteger(stepNumberText, stepIsValid);
+
+        if (!idIsValid || !stepIsValid || sessionID <= 0 ||
+            studentID.empty() || description.empty())
+        {
+            rejectedRows++;
+            continue;
+        }
+
+        if (!hasLoadedID)
+        {
+            loadedID     = sessionID;
+            hasLoadedID  = true;
+            activeStudentID = studentID;
+        }
+
+        if (sessionID != loadedID || studentID != activeStudentID ||
+            stepNumber != expectedStep)
+        {
+            rejectedRows++;
+            continue;
+        }
+
+        if (!stepStack.push(description))
+        {
+            rejectedRows++;
+            continue;
+        }
+
+        loadedSteps++;
+        expectedStep++;
+    }
+
+    inputFile.close();
+
+    if (loadedSteps > 0)
+    {
+        activeSessionID = loadedID;
+    }
+    else
+    {
+        activeSessionID = 0;
+        activeStudentID = "";
+    }
+
+    std::cout << "  " << loadedSteps << " session step(s) loaded from \""
+              << fileName << "\"." << std::endl;
+    if (rejectedRows > 0)
+    {
+        std::cout << "  " << rejectedRows
+                  << " row(s) rejected (invalid values or non-sequential steps)."
+                  << std::endl;
+    }
+
+    defaultSnapshotFile = fileName;
+    return true;
+}
+
+bool SessionModule::saveToCSV(const std::string& fileName) const
+{
+    std::ofstream outputFile(fileName.c_str());
+
+    if (!outputFile.is_open())
+    {
+        return false;
+    }
+
+    outputFile << SNAPSHOT_HEADER << std::endl;
+
+    if (hasActiveSession())
+    {
+        for (int i = 0; i < stepStack.size(); i++)
+        {
+            outputFile << activeSessionID << ","
+                       << sanitizeCsvField(activeStudentID) << ","
+                       << (i + 1) << ","
+                       << sanitizeCsvField(stepStack.get(i))
+                       << std::endl;
+        }
+    }
+
+    outputFile.close();
+    return true;
+}
+
+void SessionModule::displaySessionStatus() const
+{
+    if (!hasActiveSession())
+    {
+        std::cout << "  Active session : none" << std::endl;
+        std::cout << "  Steps recorded : 0 / " << stepStack.capacity() << std::endl;
+    }
+    else
+    {
+        std::cout << "  Active session : #" << activeSessionID
+                  << "  (" << activeStudentID << ")" << std::endl;
+        std::cout << "  Steps recorded : " << stepStack.size()
+                  << " / " << stepStack.capacity() << std::endl;
+    }
+
+    std::cout << "  Lifetime stats : "
+              << totalSessionsStarted << " session(s), "
+              << totalStepsRecorded  << " step(s), "
+              << totalBackActions    << " back action(s)" << std::endl;
+}
+
+void SessionModule::displayMenuOptions() const
+{
+    std::cout << std::endl;
+    ConsoleUI::printLine('=');
+    std::cout << "   TASK 3 : SESSION HISTORY AND NAVIGATION   [ Stack ]" << std::endl;
+    ConsoleUI::printLine('=');
+    std::cout << "   1. View current session history" << std::endl;
+    std::cout << "   2. Start a new session" << std::endl;
+    std::cout << "   3. Record a step" << std::endl;
+    std::cout << "   4. Go back one step (pop)" << std::endl;
+    std::cout << "   5. View current step (peek)" << std::endl;
+    std::cout << "   6. End current session" << std::endl;
+    std::cout << "   7. Save active session snapshot to CSV" << std::endl;
+    std::cout << "   8. Load session snapshot from CSV" << std::endl;
+    std::cout << "   0. Back to main menu" << std::endl;
+    ConsoleUI::printLine('=');
+}
+
 void SessionModule::run()
 {
     int choice = -1;
 
     while (choice != MENU_EXIT)
     {
-        ConsoleUI::printTitle("TASK 3 : SESSION HISTORY AND NAVIGATION");
+        displayMenuOptions();
+        displaySessionStatus();
 
-        if (hasActiveSession())
-        {
-            std::cout << "  Active student : " << placeholderStudentID << std::endl;
-            std::cout << "  Recorded steps : " << historyCount << std::endl;
-        }
-        else
-        {
-            std::cout << "  Active student : none" << std::endl;
-            std::cout << "  Recorded steps : 0" << std::endl;
-        }
-
-        ConsoleUI::printLine('-');
-        std::cout << "  1. View session history" << std::endl;
-        std::cout << "  2. Start a new session" << std::endl;
-        std::cout << "  3. Record a step" << std::endl;
-        std::cout << "  4. Go back one step" << std::endl;
-        std::cout << "  5. End current session" << std::endl;
-        std::cout << "  0. Return to the main menu" << std::endl;
-        ConsoleUI::printLine('-');
-
-        choice = ConsoleUI::readInteger("  Select an option (0-5) : ", 0, 5);
+        choice = ConsoleUI::readInteger("  Select an option (0-8) : ", 0, 8);
 
         if (choice == MENU_VIEW_HISTORY)
         {
@@ -74,15 +239,8 @@ void SessionModule::run()
         }
         else if (choice == MENU_RECORD_STEP)
         {
-            if (!hasActiveSession())
-            {
-                ConsoleUI::showMessage("Start a session first.");
-            }
-            else
-            {
-                std::string description = ConsoleUI::readRequiredText("  Step description : ");
-                recordStep(description);
-            }
+            std::string description = ConsoleUI::readRequiredText("  Step description : ");
+            recordStep(description);
             ConsoleUI::pause();
         }
         else if (choice == MENU_GO_BACK)
@@ -90,96 +248,157 @@ void SessionModule::run()
             std::string restoredStep;
             if (goBack(restoredStep))
             {
-                ConsoleUI::showMessage("Went back from: " + restoredStep);
+                ConsoleUI::showMessage("Back step removed: " + restoredStep);
             }
             else
             {
-                ConsoleUI::showMessage("You're already at the start.");
+                ConsoleUI::showMessage("No removable step is available.");
+            }
+            ConsoleUI::pause();
+        }
+        else if (choice == MENU_PEEK_CURRENT_STEP)
+        {
+            std::string currentStep;
+            if (peekCurrentStep(currentStep))
+            {
+                ConsoleUI::showMessage("Current step: " + currentStep);
+            }
+            else
+            {
+                ConsoleUI::showMessage("No step is currently recorded.");
             }
             ConsoleUI::pause();
         }
         else if (choice == MENU_END_SESSION)
         {
+            if (hasActiveSession())
+            {
+                ConsoleUI::showMessage("Session ended for " + activeStudentID + ".");
+            }
+            else
+            {
+                ConsoleUI::showMessage("No active session to end.");
+            }
             endSession();
-            ConsoleUI::showMessage("Session ended.");
+            ConsoleUI::pause();
+        }
+        else if (choice == MENU_SAVE_SNAPSHOT)
+        {
+            std::string fileName =
+                ConsoleUI::readLine("  File name (blank = " + defaultSnapshotFile + ") : ");
+            if (fileName.empty())
+            {
+                fileName = defaultSnapshotFile;
+            }
+
+            if (saveToCSV(fileName))
+            {
+                defaultSnapshotFile = fileName;
+                ConsoleUI::showMessage("Session snapshot saved to \"" + fileName + "\".");
+            }
+            else
+            {
+                ConsoleUI::showMessage("Could not open \"" + fileName + "\" for writing.");
+            }
+            ConsoleUI::pause();
+        }
+        else if (choice == MENU_LOAD_SNAPSHOT)
+        {
+            std::string fileName =
+                ConsoleUI::readLine("  File name (blank = " + defaultSnapshotFile + ") : ");
+            if (fileName.empty())
+            {
+                fileName = defaultSnapshotFile;
+            }
+
+            if (loadFromCSV(fileName))
+            {
+                ConsoleUI::showMessage("Session snapshot loaded from \"" + fileName + "\".");
+            }
+            else
+            {
+                ConsoleUI::showMessage("Could not open \"" + fileName + "\".");
+            }
             ConsoleUI::pause();
         }
     }
 }
 
-// Starts a fresh session for one student and clears the previous history.
-// This is O(1) because it only resets the active session state.
 void SessionModule::startSession(const std::string& studentID)
 {
-    placeholderStudentID = studentID;
-    historyCount = 0;
+    std::string cleanedID = TextUtil::trim(studentID);
+
+    if (cleanedID.empty())
+    {
+        ConsoleUI::showMessage("Student ID cannot be blank.");
+        return;
+    }
+
+    activeStudentID = cleanedID;
+    stepStack.clear();
+    activeSessionID++;
+    totalSessionsStarted++;
 }
 
-// Records one step in the session history unless the fixed stack is full.
-// This is O(1) because it only appends one entry to the next free slot.
 void SessionModule::recordStep(const std::string& description)
 {
-    if (description.empty())
+    if (!hasActiveSession())
     {
-        ConsoleUI::showMessage("The step description cannot be blank.");
+        ConsoleUI::showMessage("Start a session first.");
         return;
     }
 
-    if (historyCount >= MAX_SESSION_STEPS)
+    std::string cleaned = TextUtil::trim(description);
+    if (cleaned.empty())
     {
-        ConsoleUI::showMessage("Session history is full.");
+        ConsoleUI::showMessage("Step description cannot be blank.");
+        return;
+    }
+    if (stepStack.isFull())
+    {
+        ConsoleUI::showMessage("Session history stack is full.");
         return;
     }
 
-    stepHistory[historyCount] = description;
-    historyCount++;
+    if (stepStack.push(cleaned))
+    {
+        totalStepsRecorded++;
+    }
 }
 
-// Removes the most recent step and returns it to the caller.
-// This is O(1) because it only decrements the stack top and copies one string.
 bool SessionModule::goBack(std::string& restoredStep)
 {
-    if (historyCount <= 1)
+    if (!hasActiveSession() || stepStack.size() <= 1)
     {
         restoredStep = "";
         return false;
     }
 
-    historyCount--;
-    restoredStep = stepHistory[historyCount];
-    stepHistory[historyCount] = "";
+    if (!stepStack.pop(restoredStep))
+    {
+        return false;
+    }
 
+    totalBackActions++;
     return true;
 }
 
-// Ends the current session and clears every recorded step.
-// This is O(n) because each stored history entry is reset.
 void SessionModule::endSession()
 {
-    placeholderStudentID = "";
-    for (int i = 0; i < historyCount; i++)
-    {
-        stepHistory[i] = "";
-    }
-    historyCount = 0;
+    activeStudentID = "";
+    stepStack.clear();
 }
 
-// Reports whether a student is currently signed in.
-// This is O(1) because it only checks the stored student ID.
 bool SessionModule::hasActiveSession() const
 {
-    return !placeholderStudentID.empty();
+    return !activeStudentID.empty();
 }
 
-// Returns the number of recorded steps in the current session.
-// This is O(1) because the count is stored directly.
 int SessionModule::stepCount() const
 {
-    return historyCount;
+    return stepStack.size();
 }
 
-// Prints the recorded session steps from oldest to newest.
-// This is O(n) because every stored step must be visited once.
 void SessionModule::displayHistory() const
 {
     ConsoleUI::printLine('-');
@@ -192,21 +411,24 @@ void SessionModule::displayHistory() const
         return;
     }
 
-    if (historyCount == 0)
+    if (stepStack.isEmpty())
     {
-        ConsoleUI::showMessage("The session history is empty.");
+        ConsoleUI::showMessage("No recorded steps yet.");
         return;
     }
 
-    for (int i = 0; i < historyCount; i++)
+    for (int i = 0; i < stepStack.size(); i++)
     {
-        std::cout << "  " << (i + 1) << ". " << stepHistory[i] << std::endl;
+        std::cout << "  " << (i + 1) << ". " << stepStack.get(i) << std::endl;
     }
 }
 
-// Returns the scanned student ID for the active session.
-// This is O(1) because the ID is stored directly in the module.
 std::string SessionModule::currentStudentID() const
 {
-    return placeholderStudentID;
+    return activeStudentID;
+}
+
+bool SessionModule::peekCurrentStep(std::string& stepText) const
+{
+    return stepStack.peek(stepText);
 }

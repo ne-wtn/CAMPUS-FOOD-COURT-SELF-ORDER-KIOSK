@@ -1,20 +1,16 @@
 // ============================================================================
 //  File        : SessionModule.hpp
 //  Module      : TASK 3 - Kiosk Session History and Navigation Module
-//  Owner       : <member 3 - put your name and TP number here>
-//  Suggested   : STACK (LIFO) - browser-style back navigation and undo
-//
-//  >>> THIS IS A SKELETON. The owner of Task 3 fills it in. <<<
-//  Nobody else edits this file.
-//
-//  The PUBLIC METHODS BELOW ARE A TEAM CONTRACT: KioskSystem.cpp already calls
-//  them. Do not rename or change a signature without telling the team.
+//  Owner       : <Member 3 - Dorjee Dhaktsel Lama / TP086416>
+//  Description : User-facing Task 3 module that owns the SessionStack,
+//                handles session workflow actions and session CSV snapshots.
 // ============================================================================
 
 #ifndef SESSION_MODULE_HPP
 #define SESSION_MODULE_HPP
 
 #include "Common.hpp"
+#include "SessionStack.hpp"
 
 class SessionModule
 {
@@ -23,6 +19,10 @@ public:
 
     // Fixed upper bound for the history stack.
     static const int MAX_SESSION_STEPS = 100;
+
+    // --- Data --------------------------------------------------------------
+    bool loadFromCSV(const std::string& fileName);
+    bool saveToCSV(const std::string& fileName) const;
 
     // --- Entry point -------------------------------------------------------
     void run();                                     // the Task 3 sub-menu
@@ -38,9 +38,17 @@ public:
     std::string currentStudentID() const;
 
 private:
-    std::string placeholderStudentID;
-    std::string stepHistory[MAX_SESSION_STEPS];
-    int         historyCount;
+    std::string activeStudentID;
+    SessionStack stepStack;
+    int          activeSessionID;
+    int          totalSessionsStarted;
+    int          totalStepsRecorded;
+    int          totalBackActions;
+    std::string  defaultSnapshotFile;
+
+    void displayMenuOptions() const;
+    void displaySessionStatus() const;
+    bool peekCurrentStep(std::string& stepText) const;
 };
 
 #endif // SESSION_MODULE_HPP
