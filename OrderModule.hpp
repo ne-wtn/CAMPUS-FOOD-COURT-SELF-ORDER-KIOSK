@@ -2,35 +2,36 @@
 //  File        : OrderModule.hpp
 //  Module      : TASK 1 - Order Queue Management Module
 //  Owner       : <member 1 - put your name and TP number here>
-//  Suggested   : QUEUE (FIFO) - fair, first-come-first-served processing
+//  Data used   : QUEUE (FIFO) - fair, first-come-first-served processing
 //
-//  >>> THIS IS A SKELETON. The owner of Task 1 fills it in. <<<
-//  Nobody else edits this file.
-//
-//  The PUBLIC METHODS BELOW ARE A TEAM CONTRACT: KioskSystem.cpp already calls
-//  them. You may add as many methods as you like, but do not rename or change
-//  the signature of an existing one without telling the team, or the build
-//  breaks for everybody.
+//  The public methods below are the team contract: KioskSystem.cpp already
+//  calls them, and their names/signatures must not change. Everything in
+//  the private section is mine to design, split into:
+//    - OrderQueue.hpp/.cpp   the data structure itself (no cout in it)
+//    - this file             the screens and CSV file handling
+//  the same way Task 4 splits MenuBST (data structure) from MenuModule
+//  (menus and CSV).
 // ============================================================================
-
 #ifndef ORDER_MODULE_HPP
 #define ORDER_MODULE_HPP
 
 #include "Common.hpp"
+#include "OrderQueue.hpp"
+#include <fstream>
 
 class OrderModule
 {
 public:
     OrderModule();
 
-    // --- Data --------------------------------------------------------------
+    // --- Data ----------------------------------------------------------
     bool loadFromCSV(const std::string& fileName);
     bool saveToCSV(const std::string& fileName) const;
 
-    // --- Entry point -------------------------------------------------------
+    // --- Entry point -----------------------------------------------------
     void run();                                     // the Task 1 sub-menu
 
-    // --- CONTRACT used by KioskSystem --------------------------------------
+    // --- CONTRACT used by KioskSystem -------------------------------------
     bool enqueueOrder(const Order& order);          // step 2: join the queue
     bool peekNextOrder(Order& output) const;        // who is served next
     bool dequeueNextOrder(Order& output);           // step 3: hand to a stall
@@ -40,19 +41,28 @@ public:
     void displayPendingOrders() const;
 
 private:
-    // TODO (Task 1 owner): declare your own queue here.
-    //   Create OrderQueue.hpp / OrderQueue.cpp for the data structure itself
-    //   and keep this file for the screens and the CSV file handling, the same
-    //   way Task 4 splits MenuBST from MenuModule.
-    //
-    //   Functional requirements from the brief:
-    //     - accept and record new student orders
-    //     - maintain an ordered list of all incoming requests
-    //     - process orders in arrival order
-    //     - remove an order once a stall has been assigned to it
-    //     - display pending and completed orders
-    //     - handle an empty queue and a full queue without crashing
-    int placeholderOrderCount;
+    static const int MAX_COMPLETED_ORDERS = 100;
+
+    OrderQueue pendingQueue;                        // Task 1 data structure
+
+    // A plain history list. Not itself a required data structure - just an
+    // append-only record of what has already left the queue, so the module
+    // can show "Completed order history" per the brief.
+    Order completedOrders[MAX_COMPLETED_ORDERS];
+    int   completedOrderCount;
+
+    // The order most recently taken off the front of the queue. Held here
+    // because dequeueNextOrder() and completeOrder() are two separate calls
+    // in the workflow (KioskSystem assigns a stall in between them), so the
+    // module needs to remember which order is "in progress" across the gap.
+    Order currentlyServing;
+    bool  hasCurrentlyServing;
+
+    int nextTestOrderID;   // only used by the run() sub-menu's manual test orders
+
+    // --- internal helpers ---------------------------------------------
+    void displayOneOrder(const Order& order) const;
+    void writeOrderLine(std::ofstream& file, const Order& order) const;
 };
 
 #endif // ORDER_MODULE_HPP
