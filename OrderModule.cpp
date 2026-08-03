@@ -1,7 +1,7 @@
 // ============================================================================
 //  File        : OrderModule.cpp
 //  Module      : TASK 1 - Order Queue Management Module
-//  Owner       : <member 1 - afrah arshad shah tp085430
+//  Owner       : <member 1 - put your name and TP number here>
 //  Description : Screens and CSV persistence for the order queue. The queue
 //                logic itself lives in OrderQueue.hpp/.cpp - this file never
 //                touches the array/front/rear directly, only through
@@ -266,15 +266,16 @@ void OrderModule::run()
     {
         ConsoleUI::printTitle("TASK 1 : ORDER QUEUE MANAGEMENT (Queue - FIFO)");
         std::cout << "   1. Place a test order (manual entry)"          << std::endl;
-        std::cout << "   2. Serve the next order (dequeue + complete)"  << std::endl;
-        std::cout << "   3. Display pending orders"                     << std::endl;
-        std::cout << "   4. Display completed order history"           << std::endl;
-        std::cout << "   5. Display the order currently being served"  << std::endl;
-        std::cout << "   6. Save orders to " << FILE_ORDERS             << std::endl;
+        std::cout << "   2. Serve next order (dequeue - starts processing)" << std::endl;
+        std::cout << "   3. Complete current order (mark fulfilled)"    << std::endl;
+        std::cout << "   4. Display pending orders"                     << std::endl;
+        std::cout << "   5. Display completed order history"           << std::endl;
+        std::cout << "   6. Display the order currently being processed" << std::endl;
+        std::cout << "   7. Save orders to " << FILE_ORDERS             << std::endl;
         std::cout << "   0. Back to main menu"                          << std::endl;
         ConsoleUI::printLine('-');
 
-        choice = ConsoleUI::readInteger("  Select an option (0-6) : ", 0, 6);
+        choice = ConsoleUI::readInteger("  Select an option (0-7) : ", 0, 7);
 
         switch (choice)
         {
@@ -308,17 +309,30 @@ void OrderModule::run()
                 }
                 else
                 {
-                    std::cout << "  Now serving order #" << served.orderID
-                               << " for " << served.studentID << std::endl;
-                    completeOrder(served.orderID);
-                    ConsoleUI::showMessage("Order marked as completed.");
+                    std::cout << "  Now processing order #" << served.orderID
+                               << " for " << served.studentID
+                               << " - use option 3 to mark it fulfilled." << std::endl;
                 }
                 break;
             }
             case 3:
+            {
+                if (!hasCurrentlyServing)
+                {
+                    ConsoleUI::showMessage("No order is currently being processed. Use option 2 first.");
+                }
+                else
+                {
+                    int orderID = currentlyServing.orderID;
+                    completeOrder(orderID);
+                    ConsoleUI::showMessage("Order #" + TextUtil::toText(orderID) + " marked as completed.");
+                }
+                break;
+            }
+            case 4:
                 displayPendingOrders();
                 break;
-            case 4:
+            case 5:
             {
                 ConsoleUI::printTitle("COMPLETED ORDER HISTORY");
                 if (completedOrderCount == 0)
@@ -334,12 +348,12 @@ void OrderModule::run()
                 }
                 break;
             }
-            case 5:
+            case 6:
             {
-                ConsoleUI::printTitle("ORDER CURRENTLY BEING SERVED");
+                ConsoleUI::printTitle("ORDER CURRENTLY BEING PROCESSED");
                 if (!hasCurrentlyServing)
                 {
-                    ConsoleUI::showMessage("No order has been served yet.");
+                    ConsoleUI::showMessage("No order is currently being processed.");
                 }
                 else
                 {
@@ -347,7 +361,7 @@ void OrderModule::run()
                 }
                 break;
             }
-            case 6:
+            case 7:
             {
                 if (saveToCSV(FILE_ORDERS))
                 {
