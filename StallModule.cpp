@@ -1,13 +1,4 @@
-// ============================================================================
-//  File        : StallModule.cpp
-//  Module      : TASK 2 - Stall Assignment Module
-//  Owner       : <your name / TP number - taken on in place of the absent member>
-//
-//  A CIRCULAR QUEUE, implemented as a fixed-size array (stalls) plus a
-//  rotation pointer (current). No STL containers are used - this is a
-//  hand-written array-based circular queue, exactly like the brief asks.
-// ============================================================================
-
+//circular queue is implemented here 
 #include "StallModule.hpp"
 
 #include <iostream>
@@ -24,28 +15,20 @@ namespace
     const int MENU_EXIT          = 0;
 }
 
-// A freshly constructed record is closed and empty until it is filled in
-// by loadDefaultStalls() or loadFromCSV().
+
 StallModule::StallRecord::StallRecord()
     : name(""), capacity(0), isOpen(false), currentLoad(0), totalServed(0)
 {
 }
 
-// Starts with the built-in default stalls already loaded, so the module
-// always has something to demonstrate even before loadFromCSV() runs, or
-// if "stalls.csv" is ever missing.
-// This is O(1) here; the real work happens in loadDefaultStalls(), which is
-// O(n) in the fixed number of built-in stalls.
+
 StallModule::StallModule()
     : total(0), current(0)
 {
     loadDefaultStalls();
 }
 
-// Resets the circular queue to a small built-in set of stalls, using the
-// same stall names already found in menu_items.csv so the two data files
-// agree with each other.
-// This is O(n) in the number of default stalls, all fixed and small.
+
 void StallModule::loadDefaultStalls()
 {
     total   = 0;
@@ -67,12 +50,7 @@ void StallModule::loadDefaultStalls()
     }
 }
 
-// Loads the stall list from a CSV file shaped "StallName,Capacity,Status".
-// Replaces whatever stalls were loaded before (including the defaults) and
-// resets the rotation pointer, exactly like MenuModule::loadFromCSV does
-// for Task 4. Returns false only when the file itself cannot be opened -
-// a badly formed row is rejected and counted, not treated as a fatal error.
-// This is O(n) in the number of lines in the file.
+
 bool StallModule::loadFromCSV(const std::string& fileName)
 {
     std::ifstream inputFile(fileName.c_str());
@@ -89,7 +67,7 @@ bool StallModule::loadFromCSV(const std::string& fileName)
     std::string line;
     while (std::getline(inputFile, line))
     {
-        // Skips blank lines and the "StallName,Capacity,Status" header row.
+        // Skips blank lines and the StallName,Capacity,Status header row.
         if (CsvUtil::isHeaderOrBlank(line, "StallName"))
         {
             continue;
@@ -131,11 +109,7 @@ bool StallModule::loadFromCSV(const std::string& fileName)
     return true;
 }
 
-// Writes the current stall list back out in the same "StallName,Capacity,
-// Status" shape it is read in, so the file can be reloaded later.
-// Deliberately does NOT save currentLoad or the rotation pointer - a saved
-// file describes the stalls themselves, not one moment of a live queue.
-// This is O(n) in the number of registered stalls.
+
 bool StallModule::saveToCSV(const std::string& fileName) const
 {
     std::ofstream outputFile(fileName.c_str());
@@ -157,8 +131,7 @@ bool StallModule::saveToCSV(const std::string& fileName) const
     return true;
 }
 
-// Shows the Task 2 sub-menu so the circular queue can be demonstrated on
-// its own, without needing Task 1's order queue to be finished first.
+
 void StallModule::run()
 {
     int choice = -1;
@@ -234,11 +207,7 @@ void StallModule::run()
     }
 }
 
-// Walks the circular queue starting at "current", checking at most one
-// full lap. The first stall that is open and under capacity gets the
-// order; "current" only moves past a stall once it has actually been used,
-// so the rotation is fair and never restarts on its own.
-// This is O(n) worst case (every stall closed or full), O(1) best case.
+
 bool StallModule::assignNextStall(Order& order)
 {
     if (total <= 0)
@@ -266,8 +235,7 @@ bool StallModule::assignNextStall(Order& order)
     return false;  // every stall is closed or at capacity - nothing to assign
 }
 
-// Frees one slot at the named stall once its order has been collected.
-// This is O(n) to find the stall by name, O(1) to update it.
+
 bool StallModule::releaseStall(const std::string& stallName)
 {
     int index = findStallByName(stallName);
@@ -281,10 +249,7 @@ bool StallModule::releaseStall(const std::string& stallName)
     return true;
 }
 
-// Prints every stall's open/closed state, current load vs. capacity, and
-// how many orders it has served in total, with the next stall in the
-// rotation clearly marked.
-// This is O(n) because every stall must be visited once.
+
 void StallModule::displayStallStatus() const
 {
     ConsoleUI::printLine('-');
@@ -316,9 +281,7 @@ void StallModule::displayStallStatus() const
     }
 }
 
-// Counts stalls that are open AND have a free slot right now - the
-// real-time figure, not just how many stalls exist.
-// This is O(n) because every stall must be checked.
+// Counts stalls that are open AND have a free slot right now 
 int StallModule::availableStallCount() const
 {
     int count = 0;
@@ -334,15 +297,13 @@ int StallModule::availableStallCount() const
 }
 
 // Returns how many stalls are registered in total, open or not.
-// This is O(1) because the count is stored directly.
+
 int StallModule::stallCount() const
 {
     return total;
 }
 
 // Linear search for a stall by name (case-insensitive, so "wok master"
-// matches "Wok Master"). Returns -1 when nothing matches.
-// This is O(n) because the stalls are held in a plain array, not indexed.
 int StallModule::findStallByName(const std::string& name) const
 {
     for (int i = 0; i < total; i++)
